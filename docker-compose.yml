@@ -1,0 +1,50 @@
+version: "2" # specify docker-compose version
+
+# Define the services/containers to be run
+services:
+    soccerhub-api: #name of the second service
+        build:
+            context: .
+            dockerfile: Dockerfile
+        env_file: .env
+        environment:
+            - MONGO_USERNAME=$MONGO_USERNAME
+            - MONGO_PASSWORD=$MONGO_PASSWORD
+            - MONGO_HOSTNAME=soccerhub-database
+            - MONGO_PORT=$MONGO_PORT
+            - MONGO_DB=$MONGO_DB
+        ports:
+            - "3000:3000"
+        volumes:
+            - .:/home/node/app
+            - node_modules:/home/node/app/node_modules
+        networks:
+            - app-network
+        # command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon src/index.js
+        #command: /home/node/app/node_modules/.bin/nodemon src/index.js
+        links:
+            - soccerhub-database
+
+    soccerhub-database:
+        # image: mongo:4.1.8-xenial
+        image: mongo
+        ports:
+            - "27017:27017" # specify port forwarding
+        container_name: soccerhub-database
+        restart: unless-stopped
+        env_file: .env
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
+            - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
+        volumes:
+            - dbdata:/data/db
+        networks:
+            - app-network
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    dbdata:
+    node_modules:
